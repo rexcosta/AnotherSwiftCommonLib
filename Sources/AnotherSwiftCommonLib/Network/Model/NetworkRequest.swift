@@ -151,7 +151,7 @@ extension NetworkRequest {
 // MARK: To URLRequest
 extension NetworkRequest {
     
-    func transformToRequest() -> URLRequest? {
+    public func transformToRequest() -> URLRequest? {
         guard let requestUrl = getUrl() else {
             return nil
         }
