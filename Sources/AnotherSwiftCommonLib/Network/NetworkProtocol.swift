@@ -25,7 +25,7 @@
 import Combine
 import Foundation
 
-public protocol NetworkPortocol {
+public protocol NetworkProtocol {
     
     typealias RequestTranformer = (NetworkRequest) -> URLRequest?
     
