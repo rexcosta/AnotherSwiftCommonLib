@@ -23,18 +23,15 @@
 //
 
 import Combine
-import XCTest
-@testable import AnotherSwiftCommonLib
 
-final class AnotherSwiftCommonLibTests: XCTestCase {
+extension Result {
     
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
+    public static func makeSuccess(_ success: Success) -> AnyPublisher<Success, Failure> {
+        return Result.Publisher(Result.success(success)).eraseToAnyPublisher()
     }
-
-    static var allTests = [
-        ("testExample", testExample),
-    ]
+    
+    public static func makeError(_ error: Failure) -> AnyPublisher<Success, Failure> {
+        return Result.Publisher(Result.failure(error)).eraseToAnyPublisher()
+    }
+    
 }

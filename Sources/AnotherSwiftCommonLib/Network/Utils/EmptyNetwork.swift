@@ -24,6 +24,7 @@
 
 import Combine
 import Foundation
+import os
 
 /// Implementation of NetworkProtocol
 /// All methods return success after a period of time defined at the request timeout
@@ -33,49 +34,115 @@ import Foundation
 /// -> This only exist for test purposes
 public final class EmptyNetwork: NetworkProtocol {
     
+    private let log: OSLog
+    public let networkName: String
+    
     private let dispatchQueue: DispatchQueue
     
-    public init(dispatchQueue: DispatchQueue = DispatchQueue(label: "empty.requests.queue")) {
+    public init(
+        log: OSLog = .default,
+        networkName: String = String(describing: EmptyNetwork.self),
+        dispatchQueue: DispatchQueue = DispatchQueue(label: "empty.requests.queue")
+    ) {
+        self.log = log
+        self.networkName = networkName
         self.dispatchQueue = dispatchQueue
     }
     
     public func requestData(request: NetworkRequest) -> AnyPublisher<Data, NetworkError> {
+        os_log(.debug, log: log, "[%s][%s] Requesting Empty Data",
+               networkName,
+               request.uniqueRequestId.uuidString)
+        
         return makeFuture(request: request) { () -> Result<Data, NetworkError> in
+            os_log(.debug, log: self.log, "[%s][%s] Producing Empty Data",
+                self.networkName,
+                request.uniqueRequestId.uuidString
+            )
+            
             return Result.success(Data())
         }
     }
     
     public func requestJsonObject(request: NetworkRequest) -> AnyPublisher<[String: Any], NetworkError> {
+        os_log(.debug, log: log, "[%s][%s] Requesting Json Object",
+            networkName,
+            request.uniqueRequestId.uuidString
+        )
+        
         return makeFuture(request: request) { () -> Result<[String: Any], NetworkError> in
+            os_log(.debug, log: self.log, "[%s][%s] Producing Empty Json Object",
+                self.networkName,
+                request.uniqueRequestId.uuidString
+            )
+            
             return Result.success([String: Any]())
         }
     }
     
     public func requestJsonArray(request: NetworkRequest) -> AnyPublisher<[Any], NetworkError> {
+        os_log(.debug, log: log, "[%s][%s] Requesting Json Array",
+            networkName,
+            request.uniqueRequestId.uuidString
+        )
+        
         return makeFuture(request: request) { () -> Result<[Any], NetworkError> in
+            os_log(.debug, log: self.log, "[%s][%s] Producing Empty Json Array",
+                self.networkName,
+                request.uniqueRequestId.uuidString
+            )
+            
             return Result.success([Any]())
         }
     }
     
     public func requestDecodable<T: Decodable>(request: NetworkRequest) -> AnyPublisher<T, NetworkError> {
+        os_log(.debug, log: log, "[%s][%s] Requesting Empty Decodable",
+            networkName,
+            request.uniqueRequestId.uuidString
+        )
+        
         return makeFuture(request: request) { () -> Result<T, NetworkError> in
             do {
                 let typeAsString = String(reflecting: T.self)
                 
+                // To use JSONDecoder, we need to provide a empty json
+                // We check if the value is Swift.Array to provide [] or {}
+                // The provided Object must have all the properties optional
                 let rawJsonString: String
                 if typeAsString.contains("Swift.Array") {
+                    os_log(.debug, log: self.log, "[%s][%s] Producing Empty Decodable from json []",
+                        self.networkName,
+                        request.uniqueRequestId.uuidString
+                    )
                     rawJsonString = "[]"
+                    
                 } else {
+                    os_log(.debug, log: self.log, "[%s][%s] Producing Empty Decodable from json {}",
+                        self.networkName,
+                        request.uniqueRequestId.uuidString
+                    )
                     rawJsonString = "{}"
                 }
                 
                 guard let jsonData = rawJsonString.data(using: .utf8) else {
+                    os_log(.error, log: self.log, "[%s][%s] Producing Empty Decodable unable to produce string into data",
+                        self.networkName,
+                        request.uniqueRequestId.uuidString
+                    )
                     return Result.failure(NetworkError.invalidJson)
                 }
+                
                 let decoder = JSONDecoder()
                 let result = try decoder.decode(T.self, from: jsonData)
                 return Result.success(result)
+                
             } catch  {
+                os_log(.error, log: self.log, "[%s][%s] Producing Empty Decodable ended with error %s",
+                    self.networkName,
+                    request.uniqueRequestId.uuidString,
+                    error.localizedDescription
+                )
                 return Result.failure(NetworkError.unknown(cause: error))
             }
         }
@@ -88,7 +155,7 @@ public final class EmptyNetwork: NetworkProtocol {
         // https://heckj.github.io/swiftui-notes/#reference-future
         return Deferred {
             return Future<T, NetworkError> { promisse in
-                self.dispatchQueue.asyncAfter(deadline: DispatchTime.now() + request.timeout) {
+                self.dispatchQueue.asyncAfter(deadline: .now() + request.timeout) {
                     promisse(resultMaker())
                 }
             }

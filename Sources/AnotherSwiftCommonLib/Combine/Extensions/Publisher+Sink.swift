@@ -26,14 +26,21 @@ import Combine
 
 extension Publisher {
     
-    public func sinkToResult(_ result: @escaping (Result<Output, Failure>) -> Void) -> AnyCancellable {
+    public func sinkIntoResultAndStore(
+        in set: inout Set<AnyCancellable>,
+        _ handler: @escaping (Result<Output, Failure>) -> Void
+    ) {
+        sinkToResult(handler).store(in: &set)
+    }
+    
+    public func sinkToResult(_ handler: @escaping (Result<Output, Failure>) -> Void) -> AnyCancellable {
         return sink(receiveCompletion: {
             guard case let Subscribers.Completion.failure(error) = $0 else {
                 return
             }
-            result(.failure(error))
+            handler(.failure(error))
         }, receiveValue: { value in
-            result(.success(value))
+            handler(.success(value))
         })
     }
     
