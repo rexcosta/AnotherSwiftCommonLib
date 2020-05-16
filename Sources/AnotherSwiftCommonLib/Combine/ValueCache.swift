@@ -55,7 +55,7 @@ public final class ValueCache<Value, Failure: Error> {
     /// - Parameters:
     ///   - log: the OSLog to be used, `default` to OSLog.default
     ///   - valueCacheName: the ValueCache name to appear in the logs, `default`to  empty string
-    ///   - producer:
+    ///   - producer: the upstream data producer to be consumed by ValueCache
     /// - Note: producer must be Deferred, because it can be called multiple times
     public init(
         log: OSLog = .default,
@@ -65,6 +65,24 @@ public final class ValueCache<Value, Failure: Error> {
         self.log = log
         self.valueCacheName = valueCacheName
         self.producer = producer
+    }
+    
+    /// Creates a ready to use ValueCache
+    /// - Parameters:
+    ///   - log: the OSLog to be used, `default` to OSLog.default
+    ///   - valueCacheName: the ValueCache name to appear in the logs, `default`to  empty string
+    ///   - producer: the upstream data producer to be consumed by ValueCache
+    /// - Note: producer will be wrapper arround Deferred, because it can be called multiple times
+    public convenience init(
+        log: OSLog = .default,
+        valueCacheName: String = "",
+        producer: @escaping () -> AnyPublisher<Value, Failure>
+    ) {
+        self.init(
+            log: log,
+            valueCacheName: valueCacheName,
+            producer: Deferred(createPublisher: producer)
+        )
     }
     
     /// Forces the cache to load it's value from the producer
