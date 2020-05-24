@@ -67,11 +67,27 @@ public struct NetworkRequest {
 extension NetworkRequest: Hashable {
     
     public static func ==(lhs: NetworkRequest, rhs: NetworkRequest) -> Bool {
-         return lhs.uniqueRequestId == rhs.uniqueRequestId
+        return lhs.allowsCellularAccess == rhs.allowsCellularAccess &&
+            lhs.timeout == rhs.timeout &&
+            lhs.cachePolicy == rhs.cachePolicy &&
+            lhs.networkServiceType == rhs.networkServiceType &&
+            lhs.url == rhs.url &&
+            lhs.headers == rhs.headers &&
+            lhs.parameters == rhs.parameters &&
+            lhs.body == rhs.body &&
+            lhs.method == rhs.method
     }
     
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(uniqueRequestId)
+        hasher.combine(allowsCellularAccess)
+        hasher.combine(timeout)
+        hasher.combine(cachePolicy)
+        hasher.combine(networkServiceType)
+        hasher.combine(url)
+        hasher.combine(headers)
+        hasher.combine(parameters)
+        hasher.combine(body)
+        hasher.combine(method)
     }
     
     public func deepEqual(to other: NetworkRequest) -> Bool {
